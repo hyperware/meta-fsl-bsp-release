@@ -14,6 +14,7 @@ DEPENDS += "lzop-native bc-native"
 SRC_URI_append = " \
     file://0001-feat-kernel-add-Hyperware-i.MX8QXP-platform.patch \
     file://0002-feat-kernel-add-the-defconfig-for-Hyperware-i.MX8Q-p.patch \
+    file://0003-feat-kernel-add-Hyperware-i.MX8QM-platform.patch \
     "
 
 DEFAULT_PREFERENCE = "1"
@@ -34,8 +35,8 @@ do_copy_defconfig () {
     else
         # copy latest defconfig to use for mx8
         mkdir -p ${B}
-        cp ${S}/arch/arm64/configs/defconfig ${B}/.config
-        cp ${S}/arch/arm64/configs/defconfig ${B}/../defconfig
+        cp ${S}/arch/arm64/configs/hyperware_defconfig ${B}/.config
+        cp ${S}/arch/arm64/configs/hyperware_defconfig ${B}/../defconfig
     fi
 }
 

@@ -18,6 +18,7 @@ SRCREV = "0d6d8807793e74402e23772062469aeb4808dd48"
 
 SRC_URI_append = " \
     file://0001-feat-uboot-add-Hyperware-i.MX8QXP-platform.patch \
+    file://0002-feat-uboot-add-Hyperware-i.MX8QM-platform.patch \
     "
 
 S = "${WORKDIR}/git"
