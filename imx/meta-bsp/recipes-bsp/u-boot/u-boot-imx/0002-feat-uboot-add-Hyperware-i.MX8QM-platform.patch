@@ -1,0 +1,2526 @@
+From b1303444cd64e458addc3480be78e00fbf299292 Mon Sep 17 00:00:00 2001
+From: Clive Lau <liuxusheng@auto-link.com.cn>
+Date: Mon, 29 Apr 2019 16:15:10 +0800
+Subject: [PATCH 2/2] feat(uboot): add Hyperware i.MX8QM platform
+
+---
+ arch/arm/dts/Makefile                         |   1 +
+ arch/arm/dts/fsl-imx8qm-hyperware-auto.dts    |  76 +++
+ arch/arm/dts/fsl-imx8qm-hyperware-xen.dts     |  75 ++
+ arch/arm/dts/fsl-imx8qm-hyperware.dts         | 487 +++++++++++++
+ arch/arm/dts/fsl-imx8qm.dtsi                  |  40 +-
+ arch/arm/mach-imx/imx8/Kconfig                |   7 +
+ board/freescale/imx8qm_hyperware/Kconfig      |  14 +
+ board/freescale/imx8qm_hyperware/Makefile     |  12 +
+ .../imx8qm_hyperware/imx8qm_hyperware.c       | 644 ++++++++++++++++++
+ board/freescale/imx8qm_hyperware/spl.c        | 234 +++++++
+ board/freescale/imx8qm_hyperware/utils.c      | 194 ++++++
+ board/freescale/imx8qm_hyperware/utils.h      |  34 +
+ configs/imx8qm_hyperware_defconfig            |  99 +++
+ include/configs/imx8qm_hyperware.h            | 434 ++++++++++++
+ 14 files changed, 2347 insertions(+), 4 deletions(-)
+ create mode 100644 arch/arm/dts/fsl-imx8qm-hyperware-auto.dts
+ create mode 100644 arch/arm/dts/fsl-imx8qm-hyperware-xen.dts
+ create mode 100644 arch/arm/dts/fsl-imx8qm-hyperware.dts
+ create mode 100644 board/freescale/imx8qm_hyperware/Kconfig
+ create mode 100644 board/freescale/imx8qm_hyperware/Makefile
+ create mode 100644 board/freescale/imx8qm_hyperware/imx8qm_hyperware.c
+ create mode 100644 board/freescale/imx8qm_hyperware/spl.c
+ create mode 100644 board/freescale/imx8qm_hyperware/utils.c
+ create mode 100644 board/freescale/imx8qm_hyperware/utils.h
+ create mode 100644 configs/imx8qm_hyperware_defconfig
+ create mode 100644 include/configs/imx8qm_hyperware.h
+
+diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
+index 3fbe6acbc2..00c4067710 100644
+--- a/arch/arm/dts/Makefile
++++ b/arch/arm/dts/Makefile
+@@ -471,6 +471,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb \
+ 		fsl-imx8mm-evk.dtb
+ 
+ dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8dx-17x17-val.dtb \
++		fsl-imx8qm-hyperware.dtb \
+ 		fsl-imx8qm-ddr4-arm2.dtb \
+ 		fsl-imx8qm-lpddr4-arm2.dtb \
+ 		fsl-imx8qm-mek.dtb \
+diff --git a/arch/arm/dts/fsl-imx8qm-hyperware-auto.dts b/arch/arm/dts/fsl-imx8qm-hyperware-auto.dts
+new file mode 100644
+index 0000000000..64f05ce04a
+--- /dev/null
++++ b/arch/arm/dts/fsl-imx8qm-hyperware-auto.dts
+@@ -0,0 +1,76 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++/dts-v1/;
++
++#include "fsl-imx8qm-hyperware.dts"
++
++/ {
++	chosen {
++		bootargs = "console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200 androidboot.console=ttyLP0 androidboot.xen_boot=default";
++		stdout-path = &lpuart0;
++	};
++
++	config {
++		load-environment = <0>;
++	};
++};
++
++// &gpio2 {
++// 	status = "disabled";
++// };
++
++// &gpio4 {
++// 	status = "disabled";
++// };
++
++// &gpio5 {
++// 	status = "disabled";
++// };
++
++// &usdhc2 {
++// 	status = "disabled";
++// };
++
++// &usbotg1 {
++// 	status = "disabled";
++// };
++
++// &usb2 {
++// 	status = "disabled";
++// };
++
++// &fec1 {
++// 	status = "disabled";
++// };
++
++// &fec2 {
++// 	status = "disabled";
++// };
++
++// &flexspi0 {
++// 	status = "disabled";
++// };
++
++// &i2c1_lvds0 {
++// 	status = "disabled";
++// };
++
++// &i2c1_lvds1 {
++// 	status = "disabled";
++// };
++
++// &lpspi0 {
++// 	status = "disabled";
++// };
+diff --git a/arch/arm/dts/fsl-imx8qm-hyperware-xen.dts b/arch/arm/dts/fsl-imx8qm-hyperware-xen.dts
+new file mode 100644
+index 0000000000..314ae9f5a1
+--- /dev/null
++++ b/arch/arm/dts/fsl-imx8qm-hyperware-xen.dts
+@@ -0,0 +1,75 @@
++/*
++ * Copyright 2018 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++#include "fsl-imx8qm-hyperware.dts"
++
++/ {
++	chosen {
++		bootargs = "console=hvc0 earlycon=hvc0 androidboot.console=hvc0 androidboot.xen_boot=xen androidboot.android_dt_dir=/proc/device-tree/passthrough/firmware/android/";
++		stdout-path = &lpuart0;
++	};
++};
++
++&usdhc2 {
++	status = "disabled";
++};
++
++&gpio2 {
++	status = "disabled";
++};
++
++&gpio4 {
++	status = "okay";
++};
++
++&gpio5 {
++	status = "disabled";
++};
++
++&usb2 {
++	status = "disabled";
++};
++
++&fec1 {
++	status = "disabled";
++};
++
++&fec2 {
++	status = "disabled";
++};
++
++&flexspi0 {
++	status = "disabled";
++};
++
++&i2c0 {
++	status = "disabled";
++};
++
++&i2c1_lvds0 {
++	status = "disabled";
++};
++
++&i2c1_lvds1 {
++	status = "disabled";
++};
++
++&lpspi0 {
++	status = "disabled";
++};
++
++&lpuart0 {
++	compatible = "xen,xen";
++	u-boot,dm-pre-reloc;
++};
+diff --git a/arch/arm/dts/fsl-imx8qm-hyperware.dts b/arch/arm/dts/fsl-imx8qm-hyperware.dts
+new file mode 100644
+index 0000000000..824c99e9ee
+--- /dev/null
++++ b/arch/arm/dts/fsl-imx8qm-hyperware.dts
+@@ -0,0 +1,487 @@
++/*
++ * Copyright 2017 NXP
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ */
++
++/dts-v1/;
++
++#include "fsl-imx8qm.dtsi"
++
++/ {
++	model = "Freescale i.MX8QM MEK";
++	compatible = "fsl,imx8qm-mek", "fsl,imx8qm";
++
++	chosen {
++		bootargs = "console=ttyLP0,115200 earlycon=lpuart32,0x5a060000,115200";
++		stdout-path = &lpuart0;
++	};
++
++	regulators {
++		compatible = "simple-bus";
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		reg_usb_otg1_vbus: regulator@0 {
++			compatible = "regulator-fixed";
++			reg = <0>;
++			regulator-name = "usb_otg1_vbus";
++			regulator-min-microvolt = <5000000>;
++			regulator-max-microvolt = <5000000>;
++			gpio = <&gpio4 3 GPIO_ACTIVE_HIGH>;
++			enable-active-high;
++		};
++
++		reg_usdhc2_vmmc: usdhc2_vmmc {
++			compatible = "regulator-fixed";
++			regulator-name = "sw-3p3-sd1";
++			regulator-min-microvolt = <3300000>;
++			regulator-max-microvolt = <3300000>;
++			gpio = <&gpio4 7 GPIO_ACTIVE_HIGH>;
++			enable-active-high;
++			startup-delay-us = <100>;
++			off-on-delay-us = <12000>;
++		};
++	};
++};
++
++&iomuxc {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_hog_1>;
++
++	imx8qm-mek {
++		pinctrl_hog_1: hoggrp-1 {
++			fsl,pins = <
++				SC_P_USB_SS3_TC0_LSIO_GPIO4_IO03	  0x06000048
++				// SC_P_LVDS0_I2C0_SCL_LSIO_GPIO1_IO06	  0x06000021
++				// SC_P_LVDS0_I2C0_SDA_LSIO_GPIO1_IO07	  0x06000021
++				SC_P_QSPI1A_SS1_B_LSIO_GPIO4_IO20		  0x06000021
++				SC_P_QSPI1A_DATA2_LSIO_GPIO4_IO24		  0x06000021
++				SC_P_QSPI1A_DATA3_LSIO_GPIO4_IO23		  0x06000021
++			>;
++		};
++
++		pinctrl_fec1: fec1grp {
++			fsl,pins = <
++				SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETB_PAD	0x000014a0
++				SC_P_ENET0_MDC_CONN_ENET0_MDC			0x06000020
++				SC_P_ENET0_MDIO_CONN_ENET0_MDIO			0x06000020
++				SC_P_ENET0_RGMII_TX_CTL_CONN_ENET0_RGMII_TX_CTL	0x00000060
++				SC_P_ENET0_RGMII_TXC_CONN_ENET0_RGMII_TXC	0x00000060
++				SC_P_ENET0_RGMII_TXD0_CONN_ENET0_RGMII_TXD0	0x00000060
++				SC_P_ENET0_RGMII_TXD1_CONN_ENET0_RGMII_TXD1	0x00000060
++				SC_P_ENET0_RGMII_TXD2_CONN_ENET0_RGMII_TXD2	0x00000060
++				SC_P_ENET0_RGMII_TXD3_CONN_ENET0_RGMII_TXD3	0x00000060
++				SC_P_ENET0_RGMII_RXC_CONN_ENET0_RGMII_RXC	0x00000060
++				SC_P_ENET0_RGMII_RX_CTL_CONN_ENET0_RGMII_RX_CTL	0x00000060
++				SC_P_ENET0_RGMII_RXD0_CONN_ENET0_RGMII_RXD0	0x00000060
++				SC_P_ENET0_RGMII_RXD1_CONN_ENET0_RGMII_RXD1	0x00000060
++				SC_P_ENET0_RGMII_RXD2_CONN_ENET0_RGMII_RXD2	0x00000060
++				SC_P_ENET0_RGMII_RXD3_CONN_ENET0_RGMII_RXD3	0x00000060
++			>;
++		};
++
++		pinctrl_fec2: fec2grp {
++			fsl,pins = <
++				SC_P_COMP_CTL_GPIO_1V8_3V3_ENET_ENETA_PAD	0x000014a0
++				SC_P_ENET1_RGMII_TX_CTL_CONN_ENET1_RGMII_TX_CTL	0x00000060
++				SC_P_ENET1_RGMII_TXC_CONN_ENET1_RGMII_TXC	0x00000060
++				SC_P_ENET1_RGMII_TXD0_CONN_ENET1_RGMII_TXD0	0x00000060
++				SC_P_ENET1_RGMII_TXD1_CONN_ENET1_RGMII_TXD1	0x00000060
++				SC_P_ENET1_RGMII_TXD2_CONN_ENET1_RGMII_TXD2	0x00000060
++				SC_P_ENET1_RGMII_TXD3_CONN_ENET1_RGMII_TXD3	0x00000060
++				SC_P_ENET1_RGMII_RXC_CONN_ENET1_RGMII_RXC	0x00000060
++				SC_P_ENET1_RGMII_RX_CTL_CONN_ENET1_RGMII_RX_CTL	0x00000060
++				SC_P_ENET1_RGMII_RXD0_CONN_ENET1_RGMII_RXD0	0x00000060
++				SC_P_ENET1_RGMII_RXD1_CONN_ENET1_RGMII_RXD1	0x00000060
++				SC_P_ENET1_RGMII_RXD2_CONN_ENET1_RGMII_RXD2	0x00000060
++				SC_P_ENET1_RGMII_RXD3_CONN_ENET1_RGMII_RXD3	0x00000060
++			>;
++		};
++
++		pinctrl_lvds0_lpi2c0: lvds0lpi2c0grp {
++			fsl,pins = <
++				SC_P_LVDS0_I2C0_SCL_LVDS0_I2C0_SCL	0xc600004c
++				SC_P_LVDS0_I2C0_SDA_LVDS0_I2C0_SDA	0xc600004c
++			>;
++		};
++
++		pinctrl_lvds0_lpi2c1: lvds0lpi2c1grp {
++			fsl,pins = <
++				SC_P_LVDS0_I2C1_SCL_LVDS0_I2C1_SCL	0xc600004c
++				SC_P_LVDS0_I2C1_SDA_LVDS0_I2C1_SDA	0xc600004c
++			>;
++		};
++
++		pinctrl_lvds1_lpi2c0: lvds1lpi2c0grp {
++			fsl,pins = <
++				SC_P_LVDS1_I2C0_SCL_LVDS1_I2C0_SCL	0xc600004c
++				SC_P_LVDS1_I2C0_SDA_LVDS1_I2C0_SDA	0xc600004c
++			>;
++		};
++
++		pinctrl_lvds1_lpi2c1: lvds1lpi2c1grp {
++			fsl,pins = <
++				SC_P_LVDS1_I2C1_SCL_LVDS1_I2C1_SCL	0xc600004c
++				SC_P_LVDS1_I2C1_SDA_LVDS1_I2C1_SDA	0xc600004c
++			>;
++		};
++
++		pinctrl_lpuart0: lpuart0grp {
++			fsl,pins = <
++				SC_P_UART0_RX_DMA_UART0_RX		0x06000020
++				SC_P_UART0_TX_DMA_UART0_TX		0x06000020
++			>;
++		};
++
++		pinctrl_usdhc1: usdhc1grp {
++			fsl,pins = <
++				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000041
++				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000021
++				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000021
++				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000021
++				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000021
++				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000021
++				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000021
++				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000021
++				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000021
++				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000021
++				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x06000041
++				SC_P_EMMC0_RESET_B_CONN_EMMC0_RESET_B	0x00000021
++			>;
++		};
++
++		pinctrl_usdhc1_100mhz: usdhc1grp100mhz {
++			fsl,pins = <
++				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000040
++				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000020
++				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000020
++				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000020
++				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000020
++				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000020
++				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000020
++				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000020
++				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000020
++				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000020
++				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x06000040
++				SC_P_EMMC0_RESET_B_CONN_EMMC0_RESET_B	0x00000020
++			>;
++		};
++
++		pinctrl_usdhc1_200mhz: usdhc1grp200mhz {
++			fsl,pins = <
++				SC_P_EMMC0_CLK_CONN_EMMC0_CLK		0x06000040
++				SC_P_EMMC0_CMD_CONN_EMMC0_CMD		0x00000020
++				SC_P_EMMC0_DATA0_CONN_EMMC0_DATA0	0x00000020
++				SC_P_EMMC0_DATA1_CONN_EMMC0_DATA1	0x00000020
++				SC_P_EMMC0_DATA2_CONN_EMMC0_DATA2	0x00000020
++				SC_P_EMMC0_DATA3_CONN_EMMC0_DATA3	0x00000020
++				SC_P_EMMC0_DATA4_CONN_EMMC0_DATA4	0x00000020
++				SC_P_EMMC0_DATA5_CONN_EMMC0_DATA5	0x00000020
++				SC_P_EMMC0_DATA6_CONN_EMMC0_DATA6	0x00000020
++				SC_P_EMMC0_DATA7_CONN_EMMC0_DATA7	0x00000020
++				SC_P_EMMC0_STROBE_CONN_EMMC0_STROBE	0x06000040
++				SC_P_EMMC0_RESET_B_CONN_EMMC0_RESET_B	0x00000020
++			>;
++		};
++
++		pinctrl_usdhc2_gpio: usdhc2grpgpio {
++			fsl,pins = <
++				SC_P_USDHC1_DATA6_LSIO_GPIO5_IO21	0x00000021
++				SC_P_USDHC1_DATA7_LSIO_GPIO5_IO22	0x00000021
++				SC_P_USDHC1_RESET_B_LSIO_GPIO4_IO07	0x00000021
++			>;
++		};
++
++		pinctrl_usdhc2: usdhc2grp {
++			fsl,pins = <
++				SC_P_USDHC1_CLK_CONN_USDHC1_CLK		0x06000041
++				SC_P_USDHC1_CMD_CONN_USDHC1_CMD		0x00000021
++				SC_P_USDHC1_DATA0_CONN_USDHC1_DATA0	0x00000021
++				SC_P_USDHC1_DATA1_CONN_USDHC1_DATA1	0x00000021
++				SC_P_USDHC1_DATA2_CONN_USDHC1_DATA2	0x00000021
++				SC_P_USDHC1_DATA3_CONN_USDHC1_DATA3	0x00000021
++				SC_P_USDHC1_VSELECT_CONN_USDHC1_VSELECT	0x00000021
++			>;
++		};
++
++		pinctrl_usdhc2_100mhz: usdhc2grp100mhz {
++			fsl,pins = <
++				SC_P_USDHC1_CLK_CONN_USDHC1_CLK		0x06000040
++				SC_P_USDHC1_CMD_CONN_USDHC1_CMD		0x00000020
++				SC_P_USDHC1_DATA0_CONN_USDHC1_DATA0	0x00000020
++				SC_P_USDHC1_DATA1_CONN_USDHC1_DATA1	0x00000020
++				SC_P_USDHC1_DATA2_CONN_USDHC1_DATA2	0x00000020
++				SC_P_USDHC1_DATA3_CONN_USDHC1_DATA3	0x00000020
++				SC_P_USDHC1_VSELECT_CONN_USDHC1_VSELECT	0x00000020
++			>;
++		};
++
++		pinctrl_usdhc2_200mhz: usdhc2grp200mhz {
++			fsl,pins = <
++				SC_P_USDHC1_CLK_CONN_USDHC1_CLK		0x06000040
++				SC_P_USDHC1_CMD_CONN_USDHC1_CMD		0x00000020
++				SC_P_USDHC1_DATA0_CONN_USDHC1_DATA0	0x00000020
++				SC_P_USDHC1_DATA1_CONN_USDHC1_DATA1	0x00000020
++				SC_P_USDHC1_DATA2_CONN_USDHC1_DATA2	0x00000020
++				SC_P_USDHC1_DATA3_CONN_USDHC1_DATA3	0x00000020
++				SC_P_USDHC1_VSELECT_CONN_USDHC1_VSELECT	0x00000020
++			>;
++		};
++
++		pinctrl_lpi2c0: lpi2c0grp {
++			fsl,pins = <
++				SC_P_HDMI_TX0_TS_SCL_DMA_I2C0_SCL		0x06000020
++				SC_P_HDMI_TX0_TS_SDA_DMA_I2C0_SDA		0x06000020
++			>;
++		};
++
++		pinctrl_lpi2c4: lpi2c4grp {
++			fsl,pins = <
++				SC_P_ENET1_MDIO_DMA_I2C4_SDA		0x06000020
++				SC_P_ENET1_MDC_DMA_I2C4_SCL			0x06000020
++			>;
++		};
++
++		pinctrl_lpspi0: lpspi0grp {
++			fsl,pins = <
++				SC_P_SPI0_SCK_DMA_SPI0_SCK		0x0600004c
++				SC_P_SPI0_SDO_DMA_SPI0_SDO		0x0600004c
++				SC_P_SPI0_SDI_DMA_SPI0_SDI		0x0600004c
++				SC_P_SPI0_CS0_DMA_SPI0_CS0		0x0600004c
++				SC_P_SPI0_CS1_DMA_SPI0_CS1		0x0600004c
++			>;
++		};
++
++		pinctrl_flexspi0: flexspi0grp {
++			fsl,pins = <
++				SC_P_QSPI0A_DATA0_LSIO_QSPI0A_DATA0	0x0600004c
++				SC_P_QSPI0A_DATA1_LSIO_QSPI0A_DATA1	0x0600004c
++				SC_P_QSPI0A_DATA2_LSIO_QSPI0A_DATA2	0x0600004c
++				SC_P_QSPI0A_DATA3_LSIO_QSPI0A_DATA3	0x0600004c
++				SC_P_QSPI0A_DQS_LSIO_QSPI0A_DQS		0x0600004c
++				SC_P_QSPI0A_SS0_B_LSIO_QSPI0A_SS0_B	0x0600004c
++				SC_P_QSPI0A_SS1_B_LSIO_QSPI0A_SS1_B	0x0600004c
++				SC_P_QSPI0A_SCLK_LSIO_QSPI0A_SCLK	0x0600004c
++				SC_P_QSPI0B_SCLK_LSIO_QSPI0B_SCLK	0x0600004c
++				SC_P_QSPI0B_DATA0_LSIO_QSPI0B_DATA0	0x0600004c
++				SC_P_QSPI0B_DATA1_LSIO_QSPI0B_DATA1	0x0600004c
++				SC_P_QSPI0B_DATA2_LSIO_QSPI0B_DATA2	0x0600004c
++				SC_P_QSPI0B_DATA3_LSIO_QSPI0B_DATA3	0x0600004c
++				SC_P_QSPI0B_DQS_LSIO_QSPI0B_DQS		0x0600004c
++				SC_P_QSPI0B_SS0_B_LSIO_QSPI0B_SS0_B	0x0600004c
++				SC_P_QSPI0B_SS1_B_LSIO_QSPI0B_SS1_B	0x0600004c
++			>;
++		};
++
++	};
++};
++
++&gpio2 {
++	status = "okay";
++};
++
++&gpio4 {
++	status = "okay";
++};
++
++&gpio5 {
++	status = "okay";
++};
++
++&usdhc1 {
++	pinctrl-names = "default", "state_100mhz", "state_200mhz";
++	pinctrl-0 = <&pinctrl_usdhc1>;
++	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
++	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
++	bus-width = <8>;
++	non-removable;
++	status = "okay";
++};
++
++&usdhc2 {
++	pinctrl-names = "default", "state_100mhz", "state_200mhz";
++	pinctrl-0 = <&pinctrl_usdhc2>, <&pinctrl_usdhc2_gpio>;
++	pinctrl-1 = <&pinctrl_usdhc2_100mhz>, <&pinctrl_usdhc2_gpio>;
++	pinctrl-2 = <&pinctrl_usdhc2_200mhz>, <&pinctrl_usdhc2_gpio>;
++	bus-width = <4>;
++	cd-gpios = <&gpio5 22 GPIO_ACTIVE_LOW>;
++	wp-gpios = <&gpio5 21 GPIO_ACTIVE_HIGH>;
++	vmmc-supply = <&reg_usdhc2_vmmc>;
++	status = "okay";
++};
++
++&usbotg1 {
++	vbus-supply = <&reg_usb_otg1_vbus>;
++	srp-disable;
++	hnp-disable;
++	adp-disable;
++	disable-over-current;
++	status = "okay";
++};
++
++&usb2 {
++	status = "okay";
++};
++
++&fec1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_fec1>;
++	phy-mode = "rgmii";
++	phy-handle = <&ethphy0>;
++	fsl,magic-packet;
++	fsl,rgmii_txc_dly;
++	fsl,rgmii_rxc_dly;
++	status = "okay";
++
++	mdio {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		ethphy0: ethernet-phy@0 {
++			compatible = "ethernet-phy-ieee802.3-c22";
++			reg = <0>;
++			at803x,eee-disabled;
++			at803x,vddio-1p8v;
++		};
++
++		ethphy1: ethernet-phy@1 {
++			compatible = "ethernet-phy-ieee802.3-c22";
++			reg = <1>;
++			at803x,eee-disabled;
++			at803x,vddio-1p8v;
++		};
++	};
++};
++
++&fec2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_fec2>;
++	phy-mode = "rgmii";
++	phy-handle = <&ethphy1>;
++	fsl,ar8031-phy-fixup;
++	fsl,magic-packet;
++	status = "okay";
++};
++
++&flexspi0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_flexspi0>;
++	status = "okay";
++
++	flash0: mt35xu512aba@0 {
++		reg = <0>;
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "spi-flash";
++		spi-max-frequency = <29000000>;
++		spi-nor,ddr-quad-read-dummy = <8>;
++	};
++};
++
++&i2c0 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	clock-frequency = <100000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lpi2c0>;
++	status = "okay";
++
++};
++
++&i2c4 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	clock-frequency = <100000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lpi2c4>;
++	status = "okay";
++
++	tca9539_a: gpio@74 {
++		compatible = "ti,tca9539";
++		reg = <0x74>;
++		gpio-controller;
++		#gpio-cells = <2>;
++	};
++
++	tca9539_b: gpio@75 {
++		compatible = "ti,tca9539";
++		reg = <0x75>;
++		gpio-controller;
++		#gpio-cells = <2>;
++	};
++};
++
++&i2c0_lvds0 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lvds0_lpi2c0>;
++	clock-frequency = <100000>;
++	status = "okay";
++};
++
++&i2c1_lvds0 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lvds0_lpi2c1>;
++	clock-frequency = <100000>;
++	status = "okay";
++
++	it6263-0@4c {
++		compatible = "ITE,it6263";
++		reg = <0x4c>;
++	};
++};
++
++&i2c0_lvds1 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lvds1_lpi2c0>;
++	clock-frequency = <100000>;
++	status = "okay";
++};
++
++&i2c1_lvds1 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lvds1_lpi2c1>;
++	clock-frequency = <100000>;
++	status = "okay";
++
++	it6263-1@4c {
++		compatible = "ITE,it6263";
++		reg = <0x4c>;
++	};
++};
++
++&lpspi0 {
++	#address-cells = <1>;
++	#size-cells = <0>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lpspi0>;
++	status = "okay";
++
++	spidev0: spi@0 {
++		reg = <0>;
++		compatible = "rohm,dh2228fv";
++		spi-max-frequency = <4000000>;
++	};
++};
++
++&lpuart0 { /* console */
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_lpuart0>;
++	status = "okay";
++};
+diff --git a/arch/arm/dts/fsl-imx8qm.dtsi b/arch/arm/dts/fsl-imx8qm.dtsi
+index 626985a1b9..db5403bf07 100644
+--- a/arch/arm/dts/fsl-imx8qm.dtsi
++++ b/arch/arm/dts/fsl-imx8qm.dtsi
+@@ -64,7 +64,9 @@
+ 		i2c2 = &i2c2;
+ 		i2c3 = &i2c3;
+ 		i2c4 = &i2c4;
++		i2c5 = &i2c0_lvds0;
+ 		i2c6 = &i2c1_lvds0;
++		i2c7 = &i2c0_lvds1;
+ 		i2c8 = &i2c1_lvds1;
+ 		usb0 = &usbotg1;
+ 		usbphy0 = &usbphy1;
+@@ -1793,9 +1795,9 @@
+ 		status = "disabled";
+ 	};
+ 
+-	i2c1_lvds0: i2c@56247000 {
++	i2c0_lvds0: i2c@56246000 {
+ 		compatible = "fsl,imx8qm-lpi2c";
+-		reg = <0x0 0x56247000 0x0 0x1000>;
++		reg = <0x0 0x56246000 0x0 0x1000>;
+ 		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
+ 		interrupt-parent = <&irqsteer_lvds0>;
+ 		clocks = <&clk IMX8QM_LVDS0_I2C0_CLK>,
+@@ -1807,6 +1809,21 @@
+ 		status = "disabled";
+ 	};
+ 
++
++	i2c1_lvds0: i2c@56247000 {
++		compatible = "fsl,imx8qm-lpi2c";
++		reg = <0x0 0x56247000 0x0 0x1000>;
++		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
++		interrupt-parent = <&irqsteer_lvds0>;
++		clocks = <&clk IMX8QM_LVDS0_I2C1_CLK>,
++			 <&clk IMX8QM_LVDS0_I2C1_IPG_CLK>;
++		clock-names = "per", "ipg";
++		assigned-clocks = <&clk IMX8QM_LVDS0_I2C1_CLK>;
++		assigned-clock-rates = <24000000>;
++		power-domains = <&pd_lvds0_i2c0>;
++		status = "disabled";
++	};
++
+ 	irqsteer_lvds1: irqsteer@572400000 {
+ 		compatible = "nxp,imx-irqsteer";
+ 		reg = <0x0 0x57240000 0x0 0x1000>;
+@@ -1819,9 +1836,9 @@
+ 		power-domains = <&pd_lvds1>;
+ 	};
+ 
+-	i2c1_lvds1: i2c@57247000 {
++	i2c0_lvds1: i2c@57246000 {
+ 		compatible = "fsl,imx8qm-lpi2c";
+-		reg = <0x0 0x57247000 0x0 0x1000>;
++		reg = <0x0 0x57246000 0x0 0x1000>;
+ 		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
+ 		interrupt-parent = <&irqsteer_lvds1>;
+ 		clocks = <&clk IMX8QM_LVDS1_I2C0_CLK>,
+@@ -1833,6 +1850,21 @@
+ 		status = "disabled";
+ 	};
+ 
++
++	i2c1_lvds1: i2c@57247000 {
++		compatible = "fsl,imx8qm-lpi2c";
++		reg = <0x0 0x57247000 0x0 0x1000>;
++		interrupts = <9 IRQ_TYPE_LEVEL_HIGH>;
++		interrupt-parent = <&irqsteer_lvds1>;
++		clocks = <&clk IMX8QM_LVDS1_I2C1_CLK>,
++			 <&clk IMX8QM_LVDS1_I2C1_IPG_CLK>;
++		clock-names = "per", "ipg";
++		assigned-clocks = <&clk IMX8QM_LVDS1_I2C1_CLK>;
++		assigned-clock-rates = <24000000>;
++		power-domains = <&pd_lvds1_i2c0>;
++		status = "disabled";
++	};
++
+ 	irqsteer_csi0: irqsteer@582200000 {
+ 		compatible = "nxp,imx-irqsteer";
+ 		reg = <0x0 0x58220000 0x0 0x1000>;
+diff --git a/arch/arm/mach-imx/imx8/Kconfig b/arch/arm/mach-imx/imx8/Kconfig
+index 3cde51cd16..d0a7ec153f 100644
+--- a/arch/arm/mach-imx/imx8/Kconfig
++++ b/arch/arm/mach-imx/imx8/Kconfig
+@@ -65,6 +65,12 @@ config TARGET_IMX8QM_MEK
+ 	select SUPPORT_SPL
+ 	select IMX8QM
+ 
++config TARGET_IMX8QM_HYPERWARE
++	bool "Support i.MX8QM HYPERWARE board"
++	select BOARD_LATE_INIT
++	select SUPPORT_SPL
++	select IMX8QM
++
+ config TARGET_IMX8QXP_LPDDR4_ARM2
+ 	bool "Support i.MX8QXP lpddr4 validation board"
+ 	select BOARD_LATE_INIT
+@@ -97,6 +103,7 @@ endchoice
+ 
+ source "board/freescale/imx8qm_arm2/Kconfig"
+ source "board/freescale/imx8qm_mek/Kconfig"
++source "board/freescale/imx8qm_hyperware/Kconfig"
+ source "board/freescale/imx8qxp_arm2/Kconfig"
+ source "board/freescale/imx8qxp_mek/Kconfig"
+ source "board/freescale/imx8qxp_hyperware/Kconfig"
+diff --git a/board/freescale/imx8qm_hyperware/Kconfig b/board/freescale/imx8qm_hyperware/Kconfig
+new file mode 100644
+index 0000000000..0e4bf4ae1c
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/Kconfig
+@@ -0,0 +1,14 @@
++if TARGET_IMX8QM_HYPERWARE
++
++config SYS_BOARD
++	default "imx8qm_hyperware"
++
++config SYS_VENDOR
++	default "freescale"
++
++config SYS_CONFIG_NAME
++	default "imx8qm_hyperware"
++
++source "board/freescale/common/Kconfig"
++
++endif
+diff --git a/board/freescale/imx8qm_hyperware/Makefile b/board/freescale/imx8qm_hyperware/Makefile
+new file mode 100644
+index 0000000000..e50bf8cb43
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/Makefile
+@@ -0,0 +1,12 @@
++#
++# Copyright 2017 NXP
++#
++# SPDX-License-Identifier:	GPL-2.0+
++#
++
++obj-y += imx8qm_hyperware.o utils.o
++
++ifdef CONFIG_SPL_BUILD
++obj-y += spl.o
++endif
++
+diff --git a/board/freescale/imx8qm_hyperware/imx8qm_hyperware.c b/board/freescale/imx8qm_hyperware/imx8qm_hyperware.c
+new file mode 100644
+index 0000000000..e63cf76ee6
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/imx8qm_hyperware.c
+@@ -0,0 +1,644 @@
++/*
++ * Copyright 2017-2018 NXP
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++#include <common.h>
++#include <malloc.h>
++#include <errno.h>
++#include <netdev.h>
++#include <fsl_ifc.h>
++#include <fdt_support.h>
++#include <linux/libfdt.h>
++#include <environment.h>
++#include <fsl_esdhc.h>
++#include <i2c.h>
++
++#include <asm/io.h>
++#include <asm/gpio.h>
++#include <asm/arch/clock.h>
++#include <asm/mach-imx/sci/sci.h>
++#include <asm/arch/imx8-pins.h>
++#include <dm.h>
++#include <imx8_hsio.h>
++#include <usb.h>
++#include <asm/arch/iomux.h>
++#include <asm/arch/sys_proto.h>
++#include <asm/mach-imx/video.h>
++#include <asm/arch/video_common.h>
++#include <power-domain.h>
++#include "../common/tcpc.h"
++#include <cdns3-uboot.h>
++#include <asm/arch/lpcg.h>
++#include "utils.h"
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#define ENET_INPUT_PAD_CTRL	((SC_PAD_CONFIG_OD_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define ENET_NORMAL_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define FSPI_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define GPIO_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define I2C_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_LOW << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++static iomux_cfg_t uart0_pads[] = {
++	SC_P_UART0_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	SC_P_UART0_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++};
++
++static void setup_iomux_uart(void)
++{
++	imx8_iomux_setup_multiple_pads(uart0_pads, ARRAY_SIZE(uart0_pads));
++}
++
++int board_early_init_f(void)
++{
++	sc_ipc_t ipcHndl = 0;
++	sc_err_t sciErr = 0;
++
++	/* When start u-boot in XEN VM, directly return */
++	if (IS_ENABLED(CONFIG_XEN)) {
++		writel(0xF53535F5, (void __iomem *)0x80000000);
++		return 0;
++	}
++
++	ipcHndl = gd->arch.ipc_channel_handle;
++
++	/* Power up UART0, this is very early while power domain is not working */
++	sciErr = sc_pm_set_resource_power_mode(ipcHndl, SC_R_UART_0, SC_PM_PW_MODE_ON);
++	if (sciErr != SC_ERR_NONE)
++		return 0;
++
++	/* Set UART0 clock root to 80 MHz */
++	sc_pm_clock_rate_t rate = 80000000;
++	sciErr = sc_pm_set_clock_rate(ipcHndl, SC_R_UART_0, 2, &rate);
++	if (sciErr != SC_ERR_NONE)
++		return 0;
++
++	/* Enable UART0 clock root */
++	sciErr = sc_pm_clock_enable(ipcHndl, SC_R_UART_0, 2, true, false);
++	if (sciErr != SC_ERR_NONE)
++		return 0;
++
++	LPCG_AllClockOn(LPUART_0_LPCG);
++
++	setup_iomux_uart();
++
++	return 0;
++}
++
++#ifdef CONFIG_FEC_MXC
++#include <miiphy.h>
++
++static iomux_cfg_t pad_enet1[] = {
++	SC_P_ENET1_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET1_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET1_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET1_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET1_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET1_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET1_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++
++	/* Shared MDIO */
++	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++};
++
++static iomux_cfg_t pad_enet0[] = {
++	SC_P_ENET0_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_RXD0 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_RXD1 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_RXD2 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_RXD3 | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_RXC | MUX_PAD_CTRL(ENET_INPUT_PAD_CTRL),
++	SC_P_ENET0_RGMII_TX_CTL | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_RGMII_TXD0 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_RGMII_TXD1 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_RGMII_TXD2 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_RGMII_TXD3 | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_RGMII_TXC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++
++	/* Shared MDIO */
++	SC_P_ENET0_MDC | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++	SC_P_ENET0_MDIO | MUX_PAD_CTRL(ENET_NORMAL_PAD_CTRL),
++};
++
++static void setup_iomux_fec(void)
++{
++	if (0 == CONFIG_FEC_ENET_DEV)
++		imx8_iomux_setup_multiple_pads(pad_enet0, ARRAY_SIZE(pad_enet0));
++	else
++		imx8_iomux_setup_multiple_pads(pad_enet1, ARRAY_SIZE(pad_enet1));
++}
++
++int board_eth_init(bd_t *bis)
++{
++	int ret;
++	struct power_domain pd;
++
++	printf("[%s] %d\n", __func__, __LINE__);
++
++	if (CONFIG_FEC_ENET_DEV) {
++		if (!power_domain_lookup_name("conn_enet1", &pd))
++			power_domain_on(&pd);
++	} else {
++		if (!power_domain_lookup_name("conn_enet0", &pd))
++			power_domain_on(&pd);
++	}
++
++	setup_iomux_fec();
++
++	ret = fecmxc_initialize_multi(bis, CONFIG_FEC_ENET_DEV,
++		CONFIG_FEC_MXC_PHYADDR, IMX_FEC_BASE);
++	if (ret)
++		printf("FEC1 MXC: %s:failed\n", __func__);
++
++	return ret;
++}
++
++int board_phy_config(struct phy_device *phydev)
++{
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
++
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x00);
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x82ee);
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x05);
++	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x100);
++
++	if (phydev->drv->config)
++		phydev->drv->config(phydev);
++
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_MXC_GPIO
++
++#define LVDS_ENABLE IMX_GPIO_NR(1, 6)
++#define MIPI_ENABLE IMX_GPIO_NR(1, 7)
++
++#define BB_GPIO_3V3_1 IMX_GPIO_NR(4, 20)
++#define BB_GPIO_3V3_2 IMX_GPIO_NR(4, 24)
++#define BB_GPIO_3V3_3 IMX_GPIO_NR(4, 23)
++
++static void board_gpio_init(void)
++{
++	/* Enable BB 3V3 */
++	gpio_request(BB_GPIO_3V3_1, "bb_3v3_1");
++	gpio_direction_output(BB_GPIO_3V3_1, 1);
++	gpio_request(BB_GPIO_3V3_2, "bb_3v3_2");
++	gpio_direction_output(BB_GPIO_3V3_2, 1);
++	gpio_request(BB_GPIO_3V3_3, "bb_3v3_3");
++	gpio_direction_output(BB_GPIO_3V3_3, 1);
++
++	/* enable LVDS SAS boards */
++	gpio_request(LVDS_ENABLE, "lvds_enable");
++	gpio_direction_output(LVDS_ENABLE, 1);
++
++	/* enable MIPI SAS boards */
++	gpio_request(MIPI_ENABLE, "mipi_enable");
++	gpio_direction_output(MIPI_ENABLE, 1);
++}
++
++/* CliveLau */
++
++static iomux_cfg_t lvds_mux_gpio[] = {
++    SC_P_QSPI1A_DQS | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_GPT0_COMPARE | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_ENET1_RGMII_TXD0 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_GPT1_COMPARE | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_SAI1_TXC | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_LVDS0_GPIO00 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_QSPI1A_DATA2 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++    SC_P_LVDS1_GPIO00 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++};
++
++#define LVDS0_CHANNEL0_BL_ENABLE 	IMX_GPIO_NR(3, 15)
++#define LVDS0_CHANNEL0_PWM 			IMX_GPIO_NR(1, 4)
++
++#define LVDS0_CHANNEL1_BL_ENABLE 	IMX_GPIO_NR(4, 22)
++#define LVDS0_CHANNEL1_PWM 			IMX_GPIO_NR(0, 16)
++
++#define LVDS1_CHANNEL0_BL_ENABLE 	IMX_GPIO_NR(4, 24)
++#define LVDS1_CHANNEL0_PWM 			IMX_GPIO_NR(1, 10)
++
++#define LVDS1_CHANNEL1_BL_ENABLE 	IMX_GPIO_NR(6, 12)
++#define LVDS1_CHANNEL1_PWM 			IMX_GPIO_NR(0, 19)
++
++static void setup_gpio(void)
++{
++	imx8_iomux_setup_multiple_pads(lvds_mux_gpio, ARRAY_SIZE(lvds_mux_gpio));
++	
++	// Setup LVDS0 & LVDS1
++	gpio_request_and_direction_output(LVDS0_CHANNEL0_BL_ENABLE,"lvds0_channel0_bl_enable",1);
++	gpio_request_and_direction_output(LVDS0_CHANNEL0_PWM,"lvds0_channel0_PWM",1);
++	
++	gpio_request_and_direction_output(LVDS0_CHANNEL1_BL_ENABLE,"lvds0_channel1_bl_enable",1);
++	gpio_request_and_direction_output(LVDS0_CHANNEL1_PWM,"lvds0_channel1_PWM",1);
++
++	gpio_request_and_direction_output(LVDS1_CHANNEL0_BL_ENABLE,"lvds0_channel1_bl_enable",1);
++	gpio_request_and_direction_output(LVDS1_CHANNEL0_PWM,"lvds0_channel1_PWM",1);	
++
++	gpio_request_and_direction_output(LVDS1_CHANNEL1_BL_ENABLE,"lvds0_channel1_bl_enable",1);
++	gpio_request_and_direction_output(LVDS1_CHANNEL1_PWM,"lvds0_channel1_PWM",1);
++
++	lvds2fpdlink_setup(5, 0x0c, 0x2c);
++	lvds2fpdlink_setup(6, 0x0c, 0x2c);
++	lvds2fpdlink_setup(7, 0x0c, 0x2c);
++	lvds2fpdlink_setup(8, 0x0c, 0x2c);
++}
++#endif
++
++int checkboard(void)
++{
++	puts("Board: iMX8QM HYPERWARE\n");
++
++	print_bootinfo();
++
++	/* Note:  After reloc, ipcHndl will no longer be valid.  If handle
++	 *        returned by sc_ipc_open matches SC_IPC_CH, use this
++	 *        macro (valid after reloc) for subsequent SCI calls.
++	 */
++	if (gd->arch.ipc_channel_handle != SC_IPC_CH) {
++		printf("\nSCI error! Invalid handle\n");
++	}
++
++	return 0;
++}
++
++#ifdef CONFIG_FSL_HSIO
++
++#define PCIE_PAD_CTRL	((SC_PAD_CONFIG_OD_IN << PADRING_CONFIG_SHIFT))
++static iomux_cfg_t board_pcie_pins[] = {
++	SC_P_PCIE_CTRL0_CLKREQ_B | MUX_MODE_ALT(0) | MUX_PAD_CTRL(PCIE_PAD_CTRL),
++	SC_P_PCIE_CTRL0_WAKE_B | MUX_MODE_ALT(0) | MUX_PAD_CTRL(PCIE_PAD_CTRL),
++	SC_P_PCIE_CTRL0_PERST_B | MUX_MODE_ALT(0) | MUX_PAD_CTRL(PCIE_PAD_CTRL),
++};
++
++static void imx8qm_hsio_initialize(void)
++{
++	struct power_domain pd;
++	int ret;
++
++	if (!power_domain_lookup_name("hsio_sata0", &pd)) {
++		ret = power_domain_on(&pd);
++		if (ret)
++			printf("hsio_sata0 Power up failed! (error = %d)\n", ret);
++	}
++
++	if (!power_domain_lookup_name("hsio_pcie0", &pd)) {
++		ret = power_domain_on(&pd);
++		if (ret)
++			printf("hsio_pcie0 Power up failed! (error = %d)\n", ret);
++	}
++
++	if (!power_domain_lookup_name("hsio_pcie1", &pd)) {
++		ret = power_domain_on(&pd);
++		if (ret)
++			printf("hsio_pcie1 Power up failed! (error = %d)\n", ret);
++	}
++
++	if (!power_domain_lookup_name("hsio_gpio", &pd)) {
++		ret = power_domain_on(&pd);
++		if (ret)
++			 printf("hsio_gpio Power up failed! (error = %d)\n", ret);
++	}
++
++	LPCG_AllClockOn(HSIO_PCIE_X2_LPCG);
++	LPCG_AllClockOn(HSIO_PCIE_X1_LPCG);
++	LPCG_AllClockOn(HSIO_SATA_LPCG);
++	LPCG_AllClockOn(HSIO_PHY_X2_LPCG);
++	LPCG_AllClockOn(HSIO_PHY_X1_LPCG);
++	LPCG_AllClockOn(HSIO_PHY_X2_CRR0_LPCG);
++	LPCG_AllClockOn(HSIO_PHY_X1_CRR1_LPCG);
++	LPCG_AllClockOn(HSIO_PCIE_X2_CRR2_LPCG);
++	LPCG_AllClockOn(HSIO_PCIE_X1_CRR3_LPCG);
++	LPCG_AllClockOn(HSIO_SATA_CRR4_LPCG);
++	LPCG_AllClockOn(HSIO_MISC_LPCG);
++	LPCG_AllClockOn(HSIO_GPIO_LPCG);
++
++	imx8_iomux_setup_multiple_pads(board_pcie_pins, ARRAY_SIZE(board_pcie_pins));
++}
++
++void pci_init_board(void)
++{
++	/* test the 1 lane mode of the PCIe A controller */
++	mx8qm_pcie_init();
++}
++#endif
++
++#ifdef CONFIG_USB
++
++#ifdef CONFIG_USB_TCPC
++#define USB_TYPEC_SEL IMX_GPIO_NR(4, 6)
++#define USB_TYPEC_EN IMX_GPIO_NR(4, 19)
++
++static iomux_cfg_t ss_mux_gpio[] = {
++	SC_P_USB_SS3_TC3 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++	SC_P_QSPI1A_SS0_B | MUX_MODE_ALT(3) | MUX_PAD_CTRL(GPIO_PAD_CTRL),
++};
++
++struct tcpc_port port;
++struct tcpc_port_config port_config = {
++	.i2c_bus = 0,
++	.addr = 0x51,
++	.port_type = TYPEC_PORT_DFP,
++};
++
++void ss_mux_select(enum typec_cc_polarity pol)
++{
++	if (pol == TYPEC_POLARITY_CC1)
++		gpio_direction_output(USB_TYPEC_SEL, 0);
++	else
++		gpio_direction_output(USB_TYPEC_SEL, 1);
++}
++
++static void setup_typec(void)
++{
++	imx8_iomux_setup_multiple_pads(ss_mux_gpio, ARRAY_SIZE(ss_mux_gpio));
++	gpio_request(USB_TYPEC_SEL, "typec_sel");
++	gpio_request(USB_TYPEC_EN, "typec_en");
++
++	gpio_direction_output(USB_TYPEC_EN, 1);
++
++	tcpc_init(&port, port_config, &ss_mux_select);
++}
++#endif
++
++#ifdef CONFIG_USB_CDNS3_GADGET
++static struct cdns3_device cdns3_device_data = {
++	.none_core_base = 0x5B110000,
++	.xhci_base = 0x5B130000,
++	.dev_base = 0x5B140000,
++	.phy_base = 0x5B160000,
++	.otg_base = 0x5B120000,
++	.dr_mode = USB_DR_MODE_PERIPHERAL,
++	.index = 1,
++};
++
++int usb_gadget_handle_interrupts(void)
++{
++	cdns3_uboot_handle_interrupt(1);
++	return 0;
++}
++#endif
++
++int board_usb_init(int index, enum usb_init_type init)
++{
++	int ret = 0;
++
++	if (index == 1) {
++		if (init == USB_INIT_HOST) {
++#ifdef CONFIG_USB_TCPC
++			ret = tcpc_setup_dfp_mode(&port);
++#endif
++#ifdef CONFIG_USB_CDNS3_GADGET
++		} else {
++			struct power_domain pd;
++			int ret;
++
++			/* Power on usb */
++			if (!power_domain_lookup_name("conn_usb2", &pd)) {
++				ret = power_domain_on(&pd);
++				if (ret)
++					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
++			}
++
++			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
++				ret = power_domain_on(&pd);
++				if (ret)
++					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
++			}
++
++#ifdef CONFIG_USB_TCPC
++			ret = tcpc_setup_ufp_mode(&port);
++			printf("%d setufp mode %d\n", index, ret);
++#endif
++
++			ret = cdns3_uboot_init(&cdns3_device_data);
++			printf("%d cdns3_uboot_initmode %d\n", index, ret);
++#endif
++		}
++	}
++	return ret;
++}
++
++int board_usb_cleanup(int index, enum usb_init_type init)
++{
++	int ret = 0;
++
++	if (index == 1) {
++		if (init == USB_INIT_HOST) {
++#ifdef CONFIG_USB_TCPC
++			ret = tcpc_disable_src_vbus(&port);
++#endif
++#ifdef CONFIG_USB_CDNS3_GADGET
++		} else {
++			struct power_domain pd;
++			int ret;
++
++			cdns3_uboot_exit(1);
++
++			/* Power off usb */
++			if (!power_domain_lookup_name("conn_usb2", &pd)) {
++				ret = power_domain_off(&pd);
++				if (ret)
++					printf("conn_usb2 Power up failed! (error = %d)\n", ret);
++			}
++
++			if (!power_domain_lookup_name("conn_usb2_phy", &pd)) {
++				ret = power_domain_off(&pd);
++				if (ret)
++					printf("conn_usb2_phy Power up failed! (error = %d)\n", ret);
++			}
++#endif
++		}
++	}
++	return ret;
++}
++#endif
++
++int board_init(void)
++{
++	if (IS_ENABLED(CONFIG_XEN))
++		return 0;
++
++	/* Power up base board */
++	sc_pm_set_resource_power_mode(gd->arch.ipc_channel_handle,
++		SC_R_BOARD_R1, SC_PM_PW_MODE_ON);
++
++#ifdef CONFIG_MXC_GPIO
++	board_gpio_init();
++#endif
++
++#ifdef CONFIG_FSL_HSIO
++	imx8qm_hsio_initialize();
++#ifdef CONFIG_SCSI_AHCI_PLAT
++	sata_init();
++#endif
++#endif
++
++#if defined(CONFIG_USB_XHCI_IMX8) && defined(CONFIG_USB_TCPC)
++	setup_typec();
++#endif
++
++	return 0;
++}
++
++void board_quiesce_devices(void)
++{
++	const char *power_on_devices[] = {
++		"dma_lpuart0",
++	};
++
++	if (IS_ENABLED(CONFIG_XEN)) {
++		/* Clear magic number to let xen know uboot is over */
++		writel(0x0, (void __iomem *)0x80000000);
++		return;
++	}
++
++	power_off_pd_devices(power_on_devices, ARRAY_SIZE(power_on_devices));
++}
++
++void detail_board_ddr_info(void)
++{
++	puts("\nDDR    ");
++}
++
++/*
++ * Board specific reset that is system reset.
++ */
++void reset_cpu(ulong addr)
++{
++	puts("SCI reboot request");
++	sc_pm_reboot(SC_IPC_CH, SC_PM_RESET_TYPE_COLD);
++	while (1)
++		putc('.');
++}
++
++#ifdef CONFIG_OF_BOARD_SETUP
++int ft_board_setup(void *blob, bd_t *bd)
++{
++	return 0;
++}
++#endif
++
++int board_mmc_get_env_dev(int devno)
++{
++	/* Use EMMC */
++	if (IS_ENABLED(CONFIG_XEN))
++		return 0;
++
++	return devno;
++}
++
++int mmc_map_to_kernel_blk(int dev_no)
++{
++	/* Use EMMC */
++	if (IS_ENABLED(CONFIG_XEN))
++		return 0;
++
++	return dev_no;
++}
++
++extern uint32_t _end_ofs;
++int board_late_init(void)
++{
++#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
++	env_set("board_name", "MEK");
++	env_set("board_rev", "iMX8QM");
++#endif
++
++	env_set("sec_boot", "no");
++#ifdef CONFIG_AHAB_BOOT
++	env_set("sec_boot", "yes");
++#endif
++
++#ifdef CONFIG_ENV_IS_IN_MMC
++	board_late_mmc_env_init();
++#endif
++
++#ifdef CONFIG_MXC_GPIO
++	setup_gpio();
++#endif
++
++#ifdef IMX_LOAD_HDMI_FIMRWARE
++	char *end_of_uboot;
++	char command[256];
++	end_of_uboot = (char *)(ulong)(CONFIG_SYS_TEXT_BASE + _end_ofs + fdt_totalsize(gd->fdt_blob));
++	end_of_uboot += 9;
++
++	/* load hdmitxfw.bin and hdmirxfw.bin*/
++	memcpy(IMX_HDMI_FIRMWARE_LOAD_ADDR, end_of_uboot,
++			IMX_HDMITX_FIRMWARE_SIZE + IMX_HDMIRX_FIRMWARE_SIZE);
++
++	sprintf(command, "hdp load 0x%x", IMX_HDMI_FIRMWARE_LOAD_ADDR);
++	run_command(command, 0);
++
++	sprintf(command, "hdprx load 0x%x",
++			IMX_HDMI_FIRMWARE_LOAD_ADDR + IMX_HDMITX_FIRMWARE_SIZE);
++	run_command(command, 0);
++#endif
++
++	return 0;
++}
++
++#ifdef CONFIG_FSL_FASTBOOT
++#ifdef CONFIG_ANDROID_RECOVERY
++int is_recovery_key_pressing(void)
++{
++	return 0; /*TODO*/
++}
++#endif /*CONFIG_ANDROID_RECOVERY*/
++#endif /*CONFIG_FSL_FASTBOOT*/
++
++#if defined(CONFIG_VIDEO_IMXDPUV1)
++static void enable_lvds(struct display_info_t const *dev)
++{
++	display_controller_setup((PS2KHZ(dev->mode.pixclock) * 1000));
++	lvds_soc_setup(dev->bus, (PS2KHZ(dev->mode.pixclock) * 1000));
++	lvds_configure(dev->bus);
++	// lvds2hdmi_setup(6);
++}
++
++struct display_info_t const displays[] = {{
++	.bus	= 0, /* LVDS0 */
++	.addr	= 0, /* Unused */
++	.pixfmt	= IMXDPUV1_PIX_FMT_BGRA32,
++	.detect	= NULL,
++	.enable	= enable_lvds,
++	.mode	= {
++		.name           = "CLAA123FCA5XG", /* 1920x720 60fps */
++		.refresh        = 60,
++		.xres           = 1920,
++		.yres           = 720,
++		.pixclock       = 10504,
++		.left_margin    = 110,
++		.right_margin   = 100,
++		.upper_margin   = 5,
++		.lower_margin   = 10,
++		.hsync_len      = 10,
++		.vsync_len      = 6,
++		.sync           = FB_SYNC_EXT,
++		.vmode          = FB_VMODE_NONINTERLACED
++} } };
++size_t display_count = ARRAY_SIZE(displays);
++
++#endif /* CONFIG_VIDEO_IMXDPUV1 */
+diff --git a/board/freescale/imx8qm_hyperware/spl.c b/board/freescale/imx8qm_hyperware/spl.c
+new file mode 100644
+index 0000000000..2880998a23
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/spl.c
+@@ -0,0 +1,234 @@
++/*
++ * Copyright 2017-2018 NXP
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++#include <common.h>
++#include <spl.h>
++#include <malloc.h>
++#include <errno.h>
++#include <netdev.h>
++#include <fsl_ifc.h>
++#include <fdt_support.h>
++#include <linux/libfdt.h>
++#include <environment.h>
++#include <fsl_esdhc.h>
++#include <i2c.h>
++#include "pca953x.h"
++
++#include <asm/io.h>
++#include <asm/gpio.h>
++#include <asm/arch/clock.h>
++#include <asm/mach-imx/sci/sci.h>
++#include <asm/arch/imx8-pins.h>
++#include <dm.h>
++#include <imx8_hsio.h>
++#include <usb.h>
++#include <asm/arch/iomux.h>
++#include <asm/arch/sys_proto.h>
++#include <asm/mach-imx/video.h>
++#include <asm/arch/video_common.h>
++#include <power-domain.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++#define ESDHC_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define ESDHC_CLK_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++
++#define ENET_INPUT_PAD_CTRL	((SC_PAD_CONFIG_OD_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define ENET_NORMAL_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_18V_10MA << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define FSPI_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define GPIO_PAD_CTRL	((SC_PAD_CONFIG_NORMAL << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define I2C_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_LOW << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++
++#define UART_PAD_CTRL	((SC_PAD_CONFIG_OUT_IN << PADRING_CONFIG_SHIFT) | (SC_PAD_ISO_OFF << PADRING_LPCONFIG_SHIFT) \
++						| (SC_PAD_28FDSOI_DSE_DV_HIGH << PADRING_DSE_SHIFT) | (SC_PAD_28FDSOI_PS_PU << PADRING_PULL_SHIFT))
++#ifdef CONFIG_FSL_ESDHC
++
++#define USDHC1_CD_GPIO	IMX_GPIO_NR(5, 22)
++#define USDHC2_CD_GPIO	IMX_GPIO_NR(4, 12)
++
++static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
++	{USDHC1_BASE_ADDR, 0, 8},
++	{USDHC2_BASE_ADDR, 0, 4},
++};
++
++static iomux_cfg_t emmc0[] = {
++	SC_P_EMMC0_CLK | MUX_PAD_CTRL(ESDHC_CLK_PAD_CTRL),
++	SC_P_EMMC0_CMD | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA0 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA1 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA2 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA3 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA4 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA5 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA6 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_DATA7 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_RESET_B | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_EMMC0_STROBE | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++};
++static iomux_cfg_t usdhc1_sd[] = {
++	SC_P_USDHC1_CLK | MUX_PAD_CTRL(ESDHC_CLK_PAD_CTRL),
++	SC_P_USDHC1_CMD | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_DATA0 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_DATA1 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_DATA2 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_DATA3 | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_DATA6 | MUX_MODE_ALT(2) | MUX_PAD_CTRL(ESDHC_PAD_CTRL), /* Mux for WP */
++	SC_P_USDHC1_DATA7 | MUX_MODE_ALT(3) | MUX_PAD_CTRL(ESDHC_PAD_CTRL), /* Mux for CD,  GPIO5 IO22 */
++	SC_P_USDHC1_RESET_B | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++	SC_P_USDHC1_VSELECT | MUX_PAD_CTRL(ESDHC_PAD_CTRL),
++};
++
++int board_mmc_init(bd_t *bis)
++{
++	int i, ret;
++	sc_ipc_t ipcHndl = 0;
++
++        ipcHndl = gd->arch.ipc_channel_handle;
++
++
++	/*
++	 * According to the board_mmc_init() the following map is done:
++	 * (U-boot device node)    (Physical Port)
++	 * mmc0                    USDHC1
++	 * mmc1                    USDHC2
++	 * mmc2                    USDHC3
++	 */
++	for (i = 0; i < CONFIG_SYS_FSL_USDHC_NUM; i++) {
++		switch (i) {
++		case 0:
++                        ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_0, SC_PM_PW_MODE_ON);
++			if (ret != SC_ERR_NONE)
++                                return ret;
++
++			imx8_iomux_setup_multiple_pads(emmc0, ARRAY_SIZE(emmc0));
++			init_clk_usdhc(0);
++			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
++			break;
++		case 1:
++                        ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_SDHC_1, SC_PM_PW_MODE_ON);
++                        if (ret != SC_ERR_NONE)
++                                return ret;
++                        ret = sc_pm_set_resource_power_mode(ipcHndl, SC_R_GPIO_4, SC_PM_PW_MODE_ON);
++                        if (ret != SC_ERR_NONE)
++                                return ret;
++
++			imx8_iomux_setup_multiple_pads(usdhc1_sd, ARRAY_SIZE(usdhc1_sd));
++			init_clk_usdhc(1);
++			usdhc_cfg[i].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
++			gpio_request(USDHC1_CD_GPIO, "sd1_cd");
++			gpio_direction_input(USDHC1_CD_GPIO);
++			break;
++		default:
++			printf("Warning: you configured more USDHC controllers"
++				"(%d) than supported by the board\n", i + 1);
++			return 0;
++		}
++		ret = fsl_esdhc_initialize(bis, &usdhc_cfg[i]);
++		if (ret) {
++			printf("Warning: failed to initialize mmc dev %d\n", i);
++			return ret;
++		}
++	}
++
++	return 0;
++}
++
++int board_mmc_getcd(struct mmc *mmc)
++{
++	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
++	int ret = 0;
++
++
++	switch (cfg->esdhc_base) {
++	case USDHC1_BASE_ADDR:
++		ret = 1; /* eMMC */
++		break;
++	case USDHC2_BASE_ADDR:
++		ret = !gpio_get_value(USDHC1_CD_GPIO);
++		break;
++	}
++
++	return ret;
++}
++
++#endif /* CONFIG_FSL_ESDHC */
++
++void spl_dram_init(void)
++{
++        /* do nothing for now */
++}
++
++void spl_board_init(void)
++{
++#if defined(CONFIG_QSPI_BOOT)
++	sc_ipc_t ipcHndl = 0;
++
++	ipcHndl = gd->arch.ipc_channel_handle;
++	if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_ON)) {
++		puts("Warning: failed to initialize FSPI0\n");
++	}
++#endif
++
++        /* DDR initialization */
++        spl_dram_init();
++
++        puts("Normal Boot\n");
++}
++
++void spl_board_prepare_for_boot(void)
++{
++#if defined(CONFIG_QSPI_BOOT)
++	sc_ipc_t ipcHndl = 0;
++
++	ipcHndl = gd->arch.ipc_channel_handle;
++	if (sc_pm_set_resource_power_mode(ipcHndl, SC_R_FSPI_0, SC_PM_PW_MODE_OFF)) {
++		puts("Warning: failed to turn off FSPI0\n");
++	}
++#endif
++}
++
++
++#ifdef CONFIG_SPL_LOAD_FIT
++int board_fit_config_name_match(const char *name)
++{
++	/* Just empty function now - can't decide what to choose */
++	debug("%s: %s\n", __func__, name);
++
++	return 0;
++}
++#endif
++
++void board_init_f(ulong dummy)
++{
++        /* Clear global data */
++        memset((void *)gd, 0, sizeof(gd_t));
++
++        arch_cpu_init();
++
++        board_early_init_f();
++
++        timer_init();
++
++        preloader_console_init();
++
++        /* Clear the BSS. */
++        memset(__bss_start, 0, __bss_end - __bss_start);
++
++        board_init_r(NULL, 0);
++}
++
+diff --git a/board/freescale/imx8qm_hyperware/utils.c b/board/freescale/imx8qm_hyperware/utils.c
+new file mode 100644
+index 0000000000..a23d028e84
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/utils.c
+@@ -0,0 +1,194 @@
++/**************************************************************************
++ * Copyright (C) 2019 Shenzhen Auto-Link World Information Technology Co., Ltd.
++ * All Rights Reserved
++ *
++ * Name: utils.c
++ * Purpose:
++ *
++ * Created By:    Clive Lau <liuxusheng@auto-link.com.cn>
++ * Created Date:  2019-02-21
++ *
++ * Changelog:
++ * Date         Desc
++ * 2019-02-21   Created by Clive Lau
++**************************************************************************/
++
++#include <asm/io.h>
++#include <asm/gpio.h>
++#include <common.h>
++#include <dm.h>
++#include <errno.h>
++#include <i2c.h>
++#include <malloc.h>
++#include "utils.h"
++
++void gpio_request_and_direction_input(unsigned gpio, const char *label)
++{
++    int ret;
++
++	ret = gpio_request(gpio, label);
++	if (ret) {
++		printf("%s request %s failed ret = %d\n", __func__, label, ret);
++		return;
++	}
++
++	gpio_direction_input(gpio);
++}
++
++void gpio_request_and_direction_output(unsigned gpio, const char *label, int value)
++{
++	int ret;
++
++	ret = gpio_request(gpio, label);
++	if (ret && (-EBUSY != ret)) {
++		printf("%s request %s failed ret = %d\n", __func__, label, ret);
++		return;
++	}
++
++	gpio_direction_output(gpio, value);
++}
++
++void ioexp_request_and_direction_input(const char *name, const char *label)
++{
++	struct gpio_desc desc;
++	int ret;
++
++	ret = dm_gpio_lookup_name(name, &desc);
++	if (ret) {
++		printf("%s lookup %s failed ret = %d\n", __func__, name, ret);
++		return;
++	}
++
++	ret = dm_gpio_request(&desc, label);
++	if (ret && (-EBUSY != ret)) {
++		printf("%s request %s failed ret = %d\n", __func__, label, ret);
++		return;
++	}
++
++	dm_gpio_set_dir_flags(&desc, GPIOD_IS_IN);
++}
++
++void ioexp_request_and_direction_output(const char *name, const char *label, int value)
++{
++	struct gpio_desc desc;
++	int ret;
++
++	ret = dm_gpio_lookup_name(name, &desc);
++	if (ret) {
++		printf("%s lookup %s failed ret = %d\n", __func__, name, ret);
++		return;
++	}
++
++	ret = dm_gpio_request(&desc, label);
++	if (ret && (-EBUSY != ret)) {
++		printf("%s request %s failed ret(%d) value(%d)\n", __func__, label, ret, value);
++		return;
++	}
++
++	dm_gpio_set_dir_flags(&desc, GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
++
++	dm_gpio_set_value(&desc, value);
++}
++
++static int __i2c_reg_write(struct udevice *dev, uint addr, uint mask, uint data)
++{
++	uint8_t valb;
++	int err;
++
++	if (mask != 0xff) {
++		err = dm_i2c_read(dev, addr, &valb, 1);
++		if (err)
++			return err;
++
++		valb &= ~mask;
++		valb |= data;
++	} else {
++		valb = data;
++	}
++
++	err = dm_i2c_write(dev, addr, &valb, 1);
++	return err;
++}
++
++static int __i2c_reg_read(struct udevice *dev, uint8_t addr, uint8_t *data)
++{
++	uint8_t valb;
++	int err;
++
++	err = dm_i2c_read(dev, addr, &valb, 1);
++	if (err)
++		return err;
++
++	*data = (int)valb;
++	return 0;
++}
++
++#define I2C_WR_MAX 5
++static inline int fpd_i2c_reg_write(struct udevice *dev, uint addr, uint mask, uint data)
++{
++	int tries = I2C_WR_MAX;
++	int err;
++
++	do {
++		if (!(err = __i2c_reg_write(dev, addr, mask, data)))
++			break;
++		printf("%s 0x%02x failed ret(%d) value(0x%02x) retries(%d)\n", __func__, addr, err, data, I2C_WR_MAX - tries);
++	} while(--tries);
++
++	return err;
++}
++
++static inline int fpd_i2c_reg_read(struct udevice *dev, uint8_t addr, uint8_t *data)
++{
++	return __i2c_reg_read(dev, addr, data);
++}
++
++/* On 8QXP HYPERWARE, the LVDS0 signals are connected to Serializer<->Deserializer(FPD-Link).
++ *  There totally 4 Remote GPIOs(GPIO0/1/2/3) and 4 Local GPIOs(GPIO_REG5/6/7/8).
++ */
++int lvds2fpdlink_setup(int i2c_bus, uint8_t chip_ser, uint8_t chip_des)
++{
++	struct udevice *bus, *dev_ser, *dev_des;
++	uint8_t data;
++	int ret;
++
++	ret = uclass_get_device_by_seq(UCLASS_I2C, i2c_bus, &bus);
++	if (ret) {
++		printf("%s: No bus %d\n", __func__, i2c_bus);
++		return ret;
++	}
++
++	ret = dm_i2c_probe(bus, chip_ser, 0, &dev_ser);
++	if (ret) {
++		printf("%s: Can't find seriallizer device id=0x%x, on bus %d\n",
++				__func__, chip_ser, i2c_bus);
++		return ret;
++	}
++
++	/* I2C Pass-all */
++	fpd_i2c_reg_write(dev_ser, 0x17, 0xff, 0x9E);
++
++	ret = dm_i2c_probe(bus, chip_des, 0, &dev_des);
++	if (ret) {
++		printf("%s: Can't find Deserializer device id=0x%x, on bus %d\n",
++				__func__, chip_des, i2c_bus);
++		return ret;
++	}
++
++	/* Reset deserializer */
++	fpd_i2c_reg_write(dev_des, 0x01, 0xff, 0x02);
++
++	// Serializer -> Deserializer, GPIO0(0x0D / 0x1D): BL_PWM
++	fpd_i2c_reg_write(dev_ser, 0x0D, 0xff, 0x03);
++	fpd_i2c_reg_write(dev_des, 0x1D, 0xff, 0x05);
++
++	// Serializer -> Deserializer, GPIO1(0x0E / 0x1E): TP_RST; GPIO2(0x0E / 0x1E): BL_EN
++	fpd_i2c_reg_write(dev_ser, 0x0E, 0xff, 0x33);
++	fpd_i2c_reg_write(dev_des, 0x1E, 0xff, 0x55);
++
++	// Deserializer -> Serializer, GPIO3(0x0F / 0x1F): TP_INT
++	fpd_i2c_reg_write(dev_ser, 0x0F, 0xff, 0x05);
++	fpd_i2c_reg_write(dev_des, 0x1F, 0xff, 0x03);
++
++	return 0;
++}
+\ No newline at end of file
+diff --git a/board/freescale/imx8qm_hyperware/utils.h b/board/freescale/imx8qm_hyperware/utils.h
+new file mode 100644
+index 0000000000..a1e146cc39
+--- /dev/null
++++ b/board/freescale/imx8qm_hyperware/utils.h
+@@ -0,0 +1,34 @@
++/**************************************************************************
++ * Copyright (C) 2019 Shenzhen Auto-Link World Information Technology Co., Ltd.
++ * All Rights Reserved
++ *
++ * Name: utils.c
++ * Purpose:
++ *
++ * Created By:    Clive Lau <liuxusheng@auto-link.com.cn>
++ * Created Date:  2019-02-21
++ *
++ * Changelog:
++ * Date         Desc
++ * 2019-02-21   Created by Clive Lau
++**************************************************************************/
++
++#ifndef __UTILS_H__
++#define __UTILS_H__
++
++#ifdef __cplusplus 
++extern "C" {
++#endif
++
++void gpio_request_and_direction_input(unsigned gpio, const char *label);
++void gpio_request_and_direction_output(unsigned gpio, const char *label, int value);
++void ioexp_request_and_direction_input(const char *name, const char *label);
++void ioexp_request_and_direction_output(const char *name, const char *label, int value);
++
++int lvds2fpdlink_setup(int i2c_bus, uint8_t chip_ser, uint8_t chip_des);
++
++#ifdef __cplusplus 
++}
++#endif
++
++#endif /* __UTILS_H__ */
+\ No newline at end of file
+diff --git a/configs/imx8qm_hyperware_defconfig b/configs/imx8qm_hyperware_defconfig
+new file mode 100644
+index 0000000000..e00678af2c
+--- /dev/null
++++ b/configs/imx8qm_hyperware_defconfig
+@@ -0,0 +1,99 @@
++CONFIG_ARM=y
++CONFIG_ARCH_IMX8=y
++CONFIG_DEFAULT_DEVICE_TREE="fsl-imx8qm-hyperware"
++CONFIG_TARGET_IMX8QM_HYPERWARE=y
++CONFIG_SYS_TEXT_BASE=0x80020000
++CONFIG_CMD_IMPORTENV=n
++CONFIG_SYS_MALLOC_F_LEN=0x2000
++CONFIG_DM=y
++CONFIG_CMD_CACHE=y
++
++CONFIG_DM_SERIAL=y
++CONFIG_FSL_LPUART=y
++CONFIG_OF_CONTROL=y
++CONFIG_DM_I2C=y
++# CONFIG_DM_I2C_COMPAT is not set
++CONFIG_SYS_I2C_IMX_LPI2C=y
++CONFIG_CMD_I2C=y
++
++CONFIG_FASTBOOT=y
++CONFIG_USB_FUNCTION_FASTBOOT=y
++CONFIG_CMD_FASTBOOT=y
++CONFIG_ANDROID_BOOT_IMAGE=y
++CONFIG_FSL_FASTBOOT=y
++CONFIG_FASTBOOT_BUF_ADDR=0x82800000
++CONFIG_FASTBOOT_BUF_SIZE=0x40000000
++CONFIG_FASTBOOT_FLASH=y
++CONFIG_FASTBOOT_FLASH_MMC_DEV=0
++CONFIG_FASTBOOT_USB_DEV=1
++
++CONFIG_USB_XHCI_HCD=n
++CONFIG_USB_XHCI_IMX8=n
++
++CONFIG_DM_USB=y
++CONFIG_USB_EHCI_HCD=y
++
++CONFIG_CMD_USB=y
++CONFIG_USB=y
++CONFIG_USB_STORAGE=y
++CONFIG_USB_TCPC=n
++
++CONFIG_CMD_USB_MASS_STORAGE=y
++CONFIG_USB_GADGET=y
++CONFIG_CI_UDC=y
++CONFIG_USB_GADGET_DOWNLOAD=y
++CONFIG_USB_GADGET_MANUFACTURER="FSL"
++CONFIG_USB_GADGET_VENDOR_NUM=0x0525
++CONFIG_USB_GADGET_PRODUCT_NUM=0xa4a5
++
++CONFIG_USB_CDNS3=n
++CONFIG_USB_CDNS3_GADGET=n
++CONFIG_USB_GADGET_DUALSPEED=n
++
++CONFIG_CMD_GPIO=y
++CONFIG_DM_GPIO=y
++CONFIG_DM_PCA953X=y
++CONFIG_BOOTDELAY=3
++CONFIG_IMX_BOOTAUX=y
++CONFIG_FS_FAT=y
++CONFIG_CMD_FAT=y
++CONFIG_CMD_MMC=y
++CONFIG_DM_MMC=y
++CONFIG_MMC_IO_VOLTAGE=y
++CONFIG_MMC_UHS_SUPPORT=y
++CONFIG_MMC_HS400_SUPPORT=y
++CONFIG_EFI_PARTITION=y
++CONFIG_FSL_FSPI=y
++CONFIG_DM_SPI=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH=y
++CONFIG_SPI_FLASH_4BYTES_ADDR=y
++CONFIG_SPI_FLASH_STMICRO=y
++CONFIG_CMD_SF=y
++
++CONFIG_CMD_PING=y
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_MII=y
++CONFIG_DM_ETH=y
++# CONFIG_EFI_LOADER is not set
++
++CONFIG_DM_REGULATOR=y
++CONFIG_DM_REGULATOR_FIXED=y
++CONFIG_DM_REGULATOR_GPIO=y
++
++CONFIG_VIDEO=y
++CONFIG_VIDEO_IMX_HDP_LOAD=y
++
++CONFIG_PINCTRL=y
++CONFIG_PINCTRL_IMX8=y
++
++CONFIG_POWER_DOMAIN=y
++CONFIG_IMX8_POWER_DOMAIN=y
++
++CONFIG_DM_THERMAL=y
++CONFIG_IMX_SC_THERMAL=y
++
++CONFIG_ENV_IS_IN_MMC=y
++
++CONFIG_SMC_FUSE=y
++CONFIG_CMD_MEMTEST=y
+diff --git a/include/configs/imx8qm_hyperware.h b/include/configs/imx8qm_hyperware.h
+new file mode 100644
+index 0000000000..c1abb9ba3c
+--- /dev/null
++++ b/include/configs/imx8qm_hyperware.h
+@@ -0,0 +1,434 @@
++/*
++ * Copyright 2017-2018 NXP
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#ifndef __IMX8QM_HYPERWARE_H
++#define __IMX8QM_HYPERWARE_H
++
++#include <linux/sizes.h>
++#include <asm/arch/imx-regs.h>
++#include "imx_env.h"
++
++#ifdef CONFIG_SPL_BUILD
++
++#ifdef CONFIG_QSPI_BOOT
++#define CONFIG_SPL_SPI_LOAD
++#endif
++
++#define CONFIG_PARSE_CONTAINER
++#define CONFIG_SPL_TEXT_BASE           0x0
++#define CONFIG_SPL_MAX_SIZE            (124 * 1024)
++#define CONFIG_SYS_MONITOR_LEN         (1024 * 1024)
++#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
++#define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR                0x1040 /* (flash.bin_offset + 2Mb)/sector_size */
++#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION             0
++
++
++#define CONFIG_SPL_WATCHDOG_SUPPORT
++#define CONFIG_SPL_DRIVERS_MISC_SUPPORT
++#define CONFIG_SPL_LDSCRIPT            "arch/arm/cpu/armv8/u-boot-spl.lds"
++#define CONFIG_SPL_STACK               0x013E000
++#define CONFIG_SPL_LIBCOMMON_SUPPORT
++#define CONFIG_SPL_LIBGENERIC_SUPPORT
++#define CONFIG_SPL_SERIAL_SUPPORT
++#define CONFIG_SPL_BSS_START_ADDR      0x00128000
++#define CONFIG_SPL_BSS_MAX_SIZE        0x1000  /* 4 KB */
++#define CONFIG_SYS_SPL_MALLOC_START    0x00120000
++#define CONFIG_SYS_SPL_MALLOC_SIZE     0x3000  /* 12 KB */
++#define CONFIG_SERIAL_LPUART_BASE      0x5a060000
++#define CONFIG_SYS_ICACHE_OFF
++#define CONFIG_SYS_DCACHE_OFF
++#define CONFIG_MALLOC_F_ADDR           0x00120000 /* malloc f used before GD_FLG_FULL_MALLOC_INIT set */
++
++#define CONFIG_SPL_RAW_IMAGE_ARM_TRUSTED_FIRMWARE
++
++#define CONFIG_SPL_ABORT_ON_RAW_IMAGE /* For RAW image gives a error info not panic */
++
++#define CONFIG_OF_EMBED
++#define CONFIG_ATF_TEXT_BASE 0x80000000
++#define CONFIG_SYS_ATF_START 0x80000000
++/* #define CONFIG_FIT */
++
++/* Since the SPL runs before ATF, MU1 will not be started yet, so use MU0 */
++#define SC_IPC_CH                      SC_IPC_AP_CH0
++
++#endif
++
++
++#define CONFIG_REMAKE_ELF
++
++#define CONFIG_BOARD_EARLY_INIT_F
++#define CONFIG_ARCH_MISC_INIT
++
++#define CONFIG_CMD_READ
++
++/* Flat Device Tree Definitions */
++#define CONFIG_OF_BOARD_SETUP
++
++#undef CONFIG_CMD_EXPORTENV
++#undef CONFIG_CMD_IMPORTENV
++#undef CONFIG_CMD_IMLS
++
++#undef CONFIG_CMD_CRC32
++#undef CONFIG_BOOTM_NETBSD
++
++#define CONFIG_FSL_ESDHC
++#define CONFIG_FSL_USDHC
++#define CONFIG_SYS_FSL_ESDHC_ADDR       0
++#define USDHC1_BASE_ADDR                0x5B010000
++#define USDHC2_BASE_ADDR                0x5B020000
++#define CONFIG_SUPPORT_EMMC_BOOT	/* eMMC specific */
++
++#define CONFIG_ENV_OVERWRITE
++
++#define CONFIG_SCSI
++#define CONFIG_SCSI_AHCI
++#define CONFIG_SCSI_AHCI_PLAT
++#define CONFIG_SYS_SCSI_MAX_SCSI_ID 1
++#define CONFIG_CMD_SCSI
++#define CONFIG_LIBATA
++#define CONFIG_SYS_SCSI_MAX_LUN 1
++#define CONFIG_SYS_SCSI_MAX_DEVICE      (CONFIG_SYS_SCSI_MAX_SCSI_ID * CONFIG_SYS_SCSI_MAX_LUN)
++#define CONFIG_SYS_SCSI_MAXDEVICE       CONFIG_SYS_SCSI_MAX_DEVICE
++#define CONFIG_SYS_SATA_MAX_DEVICE	1
++#define CONFIG_SATA_IMX
++
++#define CONFIG_FSL_HSIO
++#define CONFIG_PCIE_IMX8X
++#define CONFIG_CMD_PCI
++#define CONFIG_PCI
++#define CONFIG_PCI_PNP
++#define CONFIG_PCI_SCAN_SHOW
++
++#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
++/* FUSE command */
++#define CONFIG_CMD_FUSE
++
++/* GPIO configs */
++#define CONFIG_MXC_GPIO
++
++/* ENET Config */
++#define CONFIG_MII
++
++#define CONFIG_FEC_MXC
++#define CONFIG_FEC_XCV_TYPE             RGMII
++#define FEC_QUIRK_ENET_MAC
++
++#define CONFIG_PHY_GIGE /* Support for 1000BASE-X */
++#define CONFIG_PHYLIB
++#define CONFIG_PHY_ATHEROS
++
++/* ENET0 connects AR8031 on CPU board, ENET1 connects to base board */
++#define CONFIG_FEC_ENET_DEV 0
++
++#if (CONFIG_FEC_ENET_DEV == 0)
++#define IMX_FEC_BASE			0x5B040000
++#define CONFIG_FEC_MXC_PHYADDR          0x0
++#define CONFIG_ETHPRIME                 "eth0"
++#elif (CONFIG_FEC_ENET_DEV == 1)
++#define IMX_FEC_BASE			0x5B050000
++#define CONFIG_FEC_MXC_PHYADDR          0x1
++#define CONFIG_ETHPRIME                 "eth1"
++#endif
++
++/* ENET0 MDIO are shared */
++#define CONFIG_FEC_MXC_MDIO_BASE	0x5B040000
++
++#define CONFIG_LIB_RAND
++#define CONFIG_NET_RANDOM_ETHADDR
++
++#ifdef CONFIG_AHAB_BOOT
++#define AHAB_ENV "sec_boot=yes\0"
++#else
++#define AHAB_ENV "sec_boot=no\0"
++#endif
++
++#define JAILHOUSE_ENV \
++	"jh_mmcboot=" \
++		"setenv fdt_file fsl-imx8qm-hyperware-root.dtb;"\
++		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
++		"run mmcboot; \0" \
++	"jh_netboot=" \
++		"setenv fdt_file fsl-imx8qm-hyperware-root.dtb;"\
++		"setenv boot_os 'scu_rm dtb ${fdt_addr}; booti ${loadaddr} - ${fdt_addr};'; " \
++		"run netboot; \0"
++
++#define XEN_BOOT_ENV \
++            "xenhyper_bootargs=console=dtuart dtuart=/serial@5a060000 dom0_mem=2048M dom0_max_vcpus=2 dom0_vcpus_pin=true hmp-unsafe=true\0" \
++            "xenlinux_bootargs= \0" \
++            "xenlinux_console=hvc0 earlycon=xen\0" \
++            "xenlinux_addr=0x85000000\0" \
++	    "dom0fdt_file=fsl-imx8qm-hyperware-dom0.dtb\0" \
++            "xenboot_common=" \
++                "${get_cmd} ${loadaddr} xen;" \
++                "${get_cmd} ${fdt_addr} ${dom0fdt_file};" \
++		"scu_rm dtb ${fdt_addr};" \
++                "if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
++				"if ${get_cmd} ${hdprx_addr} ${hdprx_file}; then; hdprx load ${hdprx_addr}; fi;" \
++                "${get_cmd} ${xenlinux_addr} ${image};" \
++                "fdt addr ${fdt_addr};" \
++                "fdt resize 256;" \
++                "fdt set /chosen/module@0 reg <0x00000000 ${xenlinux_addr} 0x00000000 0x${filesize}>; " \
++                "fdt set /chosen/module@0 bootargs \"${bootargs} ${xenlinux_bootargs}\"; " \
++                "setenv bootargs ${xenhyper_bootargs};" \
++                "booti ${loadaddr} - ${fdt_addr};" \
++            "\0" \
++            "xennetboot=" \
++                "setenv get_cmd dhcp;" \
++                "setenv console ${xenlinux_console};" \
++                "run netargs;" \
++                "run xenboot_common;" \
++            "\0" \
++            "xenmmcboot=" \
++                "setenv get_cmd \"fatload mmc ${mmcdev}:${mmcpart}\";" \
++                "setenv console ${xenlinux_console};" \
++                "run mmcargs;" \
++                "run xenboot_common;" \
++            "\0" \
++/* Boot M4 */
++#define M4_BOOT_ENV \
++	"m4_0_image=m4_0.bin\0" \
++	"m4_1_image=m4_1.bin\0" \
++	"loadm4image_0=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_0_image}\0" \
++	"loadm4image_1=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${m4_1_image}\0" \
++	"m4boot_0=run loadm4image_0; dcache flush; bootaux ${loadaddr} 0\0" \
++	"m4boot_1=run loadm4image_1; dcache flush; bootaux ${loadaddr} 1\0" \
++
++#ifdef CONFIG_NAND_BOOT
++#define MFG_NAND_PARTITION "mtdparts=gpmi-nand:128m(boot),32m(kernel),16m(dtb),8m(misc),-(rootfs) "
++#else
++#define MFG_NAND_PARTITION ""
++#endif
++
++#define CONFIG_MFG_ENV_SETTINGS \
++	CONFIG_MFG_ENV_SETTINGS_DEFAULT \
++	"initrd_addr=0x83100000\0" \
++	"initrd_high=0xffffffffffffffff\0" \
++	"emmc_dev=0\0" \
++	"sd_dev=1\0" \
++
++/* Initial environment variables */
++#define CONFIG_EXTRA_ENV_SETTINGS		\
++	CONFIG_MFG_ENV_SETTINGS \
++	M4_BOOT_ENV \
++	XEN_BOOT_ENV \
++	JAILHOUSE_ENV\
++	AHAB_ENV \
++	"script=boot.scr\0" \
++	"image=Image\0" \
++	"panel=NULL\0" \
++	"console=ttyLP0\0" \
++	"earlycon=lpuart32,0x5a060000\0" \
++	"fdt_addr=0x83000000\0"			\
++	"fdt_high=0xffffffffffffffff\0"		\
++	"cntr_addr=0x88000000\0"			\
++	"cntr_file=os_cntr_signed.bin\0" \
++	"boot_fdt=try\0" \
++	"fdt_file=fsl-imx8qm-hyperware.dtb\0" \
++	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
++	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
++	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
++	"mmcautodetect=yes\0" \
++	"mmcargs=setenv bootargs console=${console},${baudrate} earlycon=${earlycon},${baudrate} root=${mmcroot}\0 " \
++	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
++	"bootscript=echo Running bootscript from mmc ...; " \
++		"source\0" \
++	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
++	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
++	"hdp_addr=0x84000000\0" \
++	"hdprx_addr=0x84800000\0" \
++	"hdp_file=hdmitxfw.bin\0" \
++	"hdprx_file=hdmirxfw.bin\0" \
++	"loadhdp=fatload mmc ${mmcdev}:${mmcpart} ${hdp_addr} ${hdp_file}\0" \
++	"loadhdprx=fatload mmc ${mmcdev}:${mmcpart} ${hdprx_addr} ${hdprx_file}\0" \
++	"boot_os=booti ${loadaddr} - ${fdt_addr};\0" \
++	"loadcntr=fatload mmc ${mmcdev}:${mmcpart} ${cntr_addr} ${cntr_file}\0" \
++	"auth_os=auth_cntr ${cntr_addr}\0" \
++	"mmcboot=echo Booting from mmc ...; " \
++		"if run loadhdp; then; hdp load ${hdp_addr}; fi;" \
++		"if run loadhdprx; then; hdprx load ${hdprx_addr}; fi;" \
++		"run mmcargs; " \
++		"if test ${sec_boot} = yes; then " \
++			"if run auth_os; then " \
++				"run boot_os; " \
++			"else " \
++				"echo ERR: failed to authenticate; " \
++			"fi; " \
++		"else " \
++			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
++				"if run loadfdt; then " \
++					"run boot_os; " \
++				"else " \
++					"echo WARN: Cannot load the DT; " \
++				"fi; " \
++			"else " \
++				"echo wait for boot; " \
++			"fi;" \
++		"fi;\0" \
++	"netargs=setenv bootargs console=${console},${baudrate} earlycon=${earlycon},${baudrate} " \
++		"root=/dev/nfs " \
++		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
++	"netboot=echo Booting from net ...; " \
++		"run netargs;  " \
++		"if test ${ip_dyn} = yes; then " \
++			"setenv get_cmd dhcp; " \
++		"else " \
++			"setenv get_cmd tftp; " \
++		"fi; " \
++		"if ${get_cmd} ${hdp_addr} ${hdp_file}; then; hdp load ${hdp_addr}; fi;" \
++		"if ${get_cmd} ${hdprx_addr} ${hdprx_file}; then; hdprx load ${hdprx_addr}; fi;" \
++		"if test ${sec_boot} = yes; then " \
++			"${get_cmd} ${cntr_addr} ${cntr_file}; " \
++			"if run auth_os; then " \
++				"run boot_os; " \
++			"else " \
++				"echo ERR: failed to authenticate; " \
++			"fi; " \
++		"else " \
++			"${get_cmd} ${loadaddr} ${image}; " \
++			"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
++				"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
++					"run boot_os; " \
++				"else " \
++					"echo WARN: Cannot load the DT; " \
++				"fi; " \
++			"else " \
++				"booti; " \
++			"fi;" \
++		"fi;\0"
++
++#define CONFIG_BOOTCOMMAND \
++	   "mmc dev ${mmcdev}; if mmc rescan; then " \
++		   "if run loadbootscript; then " \
++			   "run bootscript; " \
++		   "else " \
++			   "if test ${sec_boot} = yes; then " \
++				   "if run loadcntr; then " \
++					   "run mmcboot; " \
++				   "else run netboot; " \
++				   "fi; " \
++			    "else " \
++				   "if run loadimage; then " \
++					   "run mmcboot; " \
++				   "else run netboot; " \
++				   "fi; " \
++			 "fi; " \
++		   "fi; " \
++	   "else booti ${loadaddr} - ${fdt_addr}; fi"
++
++/* Link Definitions */
++#define CONFIG_LOADADDR			0x80280000
++
++#define CONFIG_SYS_LOAD_ADDR           CONFIG_LOADADDR
++
++#define CONFIG_SYS_INIT_SP_ADDR         0x80200000
++
++
++/* Default environment is in SD */
++#define CONFIG_ENV_SIZE			0x2000
++
++#ifdef CONFIG_QSPI_BOOT
++#define CONFIG_ENV_OFFSET       (4 * 1024 * 1024)
++#define CONFIG_ENV_SECT_SIZE	(128 * 1024)
++#define CONFIG_ENV_SPI_BUS	CONFIG_SF_DEFAULT_BUS
++#define CONFIG_ENV_SPI_CS	CONFIG_SF_DEFAULT_CS
++#define CONFIG_ENV_SPI_MODE	CONFIG_SF_DEFAULT_MODE
++#define CONFIG_ENV_SPI_MAX_HZ	CONFIG_SF_DEFAULT_SPEED
++#else
++#define CONFIG_ENV_OFFSET       (64 * SZ_64K)
++#define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
++#endif
++
++#define CONFIG_SYS_MMC_IMG_LOAD_PART	1
++
++#define CONFIG_SYS_MMC_ENV_DEV		0   /* USDHC1 */
++#define CONFIG_MMCROOT			"/dev/mmcblk0p2"  /* USDHC1 */
++#define CONFIG_SYS_FSL_USDHC_NUM	1
++
++
++/* Size of malloc() pool */
++#define CONFIG_SYS_MALLOC_LEN		((CONFIG_ENV_SIZE + (32*1024)) * 1024)
++
++#define CONFIG_SYS_SDRAM_BASE		0x80000000
++#define CONFIG_NR_DRAM_BANKS		4
++#define PHYS_SDRAM_1			0x80000000
++#define PHYS_SDRAM_2			0x880000000
++#define PHYS_SDRAM_1_SIZE		0x80000000	/* 2 GB */
++#define PHYS_SDRAM_2_SIZE		0x100000000	/* 4 GB */
++
++#define CONFIG_SYS_MEMTEST_START    0xA0000000
++#define CONFIG_SYS_MEMTEST_END      (CONFIG_SYS_MEMTEST_START + (PHYS_SDRAM_1_SIZE >> 2))
++
++/* Serial */
++#define CONFIG_BAUDRATE			115200
++
++/* Monitor Command Prompt */
++#define CONFIG_HUSH_PARSER
++#define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
++#define CONFIG_SYS_CBSIZE              2048
++#define CONFIG_SYS_MAXARGS             64
++#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
++#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
++					sizeof(CONFIG_SYS_PROMPT) + 16)
++
++/* Generic Timer Definitions */
++#define COUNTER_FREQUENCY		8000000	/* 8MHz */
++
++#define CONFIG_IMX_SMMU
++
++/* MT35XU512ABA1G12 has only one Die, so QSPI0 B won't work */
++#ifdef CONFIG_FSL_FSPI
++#define CONFIG_SF_DEFAULT_BUS		0
++#define CONFIG_SF_DEFAULT_CS		0
++#define CONFIG_SF_DEFAULT_SPEED	40000000
++#define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
++#define FSL_FSPI_FLASH_SIZE		SZ_64M
++#define FSL_FSPI_FLASH_NUM		1
++#define FSPI0_BASE_ADDR			0x5d120000
++#define FSPI0_AMBA_BASE			0
++#define CONFIG_SYS_FSL_FSPI_AHB
++#endif
++
++#define CONFIG_SERIAL_TAG
++
++/* USB Config */
++#ifdef CONFIG_CMD_USB
++#define CONFIG_USB_MAX_CONTROLLER_COUNT 2
++
++/* USB OTG controller configs */
++#ifdef CONFIG_USB_EHCI_HCD
++#define CONFIG_USB_HOST_ETHER
++#define CONFIG_USB_ETHER_ASIX
++#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
++#endif
++#endif /* CONFIG_CMD_USB */
++
++#ifdef CONFIG_USB_GADGET
++#define CONFIG_USBD_HS
++#endif
++
++/* Framebuffer */
++#ifdef CONFIG_VIDEO
++#define CONFIG_VIDEO_IMXDPUV1
++#define CONFIG_VIDEO_BMP_RLE8
++#define CONFIG_SPLASH_SCREEN
++#define CONFIG_SPLASH_SCREEN_ALIGN
++#define CONFIG_BMP_16BPP
++#define CONFIG_VIDEO_LOGO
++#define CONFIG_VIDEO_BMP_LOGO
++#define CONFIG_IMX_VIDEO_SKIP
++#endif
++
++#define CONFIG_OF_SYSTEM_SETUP
++#define BOOTAUX_RESERVED_MEM_BASE 0x88000000
++#define BOOTAUX_RESERVED_MEM_SIZE 0x08000000 /* Reserve from second 128MB */
++
++#if defined(CONFIG_ANDROID_SUPPORT)
++#include "imx8qm_hyperware_android.h"
++#elif defined (CONFIG_ANDROID_AUTO_SUPPORT)
++#include "imx8qm_hyperware_android_auto.h"
++#endif
++
++#endif /* __IMX8QM_HYPERWARE_H */
+-- 
+2.21.0
+
