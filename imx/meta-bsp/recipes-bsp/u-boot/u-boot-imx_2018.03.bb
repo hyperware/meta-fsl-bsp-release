@@ -16,6 +16,10 @@ SRCBRANCH = "imx_v2018.03_4.14.98_2.0.0_ga"
 SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
 SRCREV = "0d6d8807793e74402e23772062469aeb4808dd48"
 
+SRC_URI_append = " \
+    file://0001-feat-uboot-add-Hyperware-i.MX8QXP-platform.patch \
+    "
+
 S = "${WORKDIR}/git"
 
 inherit fsl-u-boot-localversion

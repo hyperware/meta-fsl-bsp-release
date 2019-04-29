@@ -11,6 +11,11 @@ require linux-imx-src-${PV}.inc
 
 DEPENDS += "lzop-native bc-native"
 
+SRC_URI_append = " \
+    file://0001-feat-kernel-add-Hyperware-i.MX8QXP-platform.patch \
+    file://0002-feat-kernel-add-the-defconfig-for-Hyperware-i.MX8Q-p.patch \
+    "
+
 DEFAULT_PREFERENCE = "1"
 
 DO_CONFIG_V7_COPY = "no"
