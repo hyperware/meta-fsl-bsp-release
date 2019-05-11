@@ -35,11 +35,12 @@ diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
 index 3fbe6acbc2..00c4067710 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -471,6 +471,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb \
+@@ -471,6 +471,8 @@ dtb-$(CONFIG_ARCH_IMX8M) += fsl-imx8mq-evk.dtb \
  		fsl-imx8mm-evk.dtb
  
  dtb-$(CONFIG_ARCH_IMX8) += fsl-imx8dx-17x17-val.dtb \
 +		fsl-imx8qm-hyperware.dtb \
++		fsl-imx8qm-hyperware-xen.dtb \
  		fsl-imx8qm-ddr4-arm2.dtb \
  		fsl-imx8qm-lpddr4-arm2.dtb \
  		fsl-imx8qm-mek.dtb \

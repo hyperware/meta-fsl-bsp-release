@@ -15,6 +15,7 @@ SRC_URI_append = " \
     file://0001-feat-kernel-add-Hyperware-i.MX8QXP-platform.patch \
     file://0002-feat-kernel-add-the-defconfig-for-Hyperware-i.MX8Q-p.patch \
     file://0003-feat-kernel-add-Hyperware-i.MX8QM-platform.patch \
+    file://0004-Add-dts-file-for-hyperware-dom0.patch \
     "
 
 DEFAULT_PREFERENCE = "1"
